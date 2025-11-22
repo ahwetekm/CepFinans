@@ -1,8 +1,9 @@
-# <div align="center">
-  <img src="public/favicon.png" alt="CepFinans Logo" width="120" height="120">
+<div align="center">
+  <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+    <img src="public/favicon.png" alt="CepFinans Logo" width="80" height="80">
+    <h1 style="margin: 0; font-size: 4rem; font-weight: bold;">CepFinans</h1>
+  </div>
 </div>
-
-<h1 align="center">CepFinans</h1>
 <p align="center">
   <strong>Modern Kişisel Muhasebe Uygulaması</strong>
 </p>
