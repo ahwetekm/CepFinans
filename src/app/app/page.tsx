@@ -278,6 +278,7 @@ export default function CepFinansApp() {
       balances,
       transactions,
       recurringTransactions,
+      notes, // Notları da yedekle
       exportDate: new Date().toISOString()
     }
     
@@ -316,6 +317,11 @@ export default function CepFinansApp() {
         if (data.recurringTransactions) {
           setRecurringTransactions(data.recurringTransactions)
           localStorage.setItem('cepfinans-recurring', JSON.stringify(data.recurringTransactions))
+        }
+        
+        if (data.notes) { // Notları da geri yükle
+          setNotes(data.notes)
+          localStorage.setItem('cepfinans-notes', JSON.stringify(data.notes))
         }
         
         setIsFirstTime(false)
@@ -527,7 +533,7 @@ export default function CepFinansApp() {
                   <div>
                     <Label className="text-sm font-medium">Veri Yedekleme</Label>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      Tüm verilerinizi JSON formatında yedekleyin
+                      Tüm verilerinizi ve notlarınızı JSON formatında yedekleyin
                     </p>
                     <Button onClick={backupData} className="w-full bg-green-600 hover:bg-green-700">
                       <Download className="h-4 w-4 mr-2" />
