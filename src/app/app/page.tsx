@@ -74,6 +74,71 @@ export default function CepFinansApp() {
   const [showAllNotesDialog, setShowAllNotesDialog] = useState(false)
   const [noteFilter, setNoteFilter] = useState<'all' | 'today' | 'week' | 'month'>('all')
   
+  // Döviz state
+  const [exchangeRates, setExchangeRates] = useState<{[key: string]: number}>({})
+  const [loadingRates, setLoadingRates] = useState(false)
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
+  const [currencyAmounts, setCurrencyAmounts] = useState<{[key: string]: number}>({})
+  
+  // Döviz API fonksiyonu
+  const fetchExchangeRates = async () => {
+    setLoadingRates(true)
+    try {
+      // Ücretsiz döviz API'si (exchangerate-api.com)
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
+      if (!response.ok) {
+        throw new Error('Döviz kurları alınamadı')
+      }
+      
+      const data = await response.json()
+      
+      // TL kurunu ekleyelim (API'de yoksa manuel ekle)
+      const ratesWithTL = {
+        ...data.rates,
+        TRY: 32.50 // Manuel TL kuru (örnek değer)
+      }
+      
+      setExchangeRates(ratesWithTL)
+      
+      // Mevcut bakiyeleri TL'ye çevir
+      const newCurrencyAmounts: {[key: string]: number} = {}
+      Object.keys(ratesWithTL).forEach(currency => {
+        newCurrencyAmounts[currency] = balances.cash * ratesWithTL[currency] + 
+                                       balances.bank * ratesWithTL[currency] + 
+                                       balances.savings * ratesWithTL[currency]
+      })
+      setCurrencyAmounts(newCurrencyAmounts)
+      
+    } catch (error) {
+      console.error('Döviz kuru hatası:', error)
+      // Hata durumunda varsayılan kurlar
+      const defaultRates = {
+        USD: 1,
+        EUR: 0.92,
+        GBP: 0.79,
+        TRY: 32.50
+      }
+      setExchangeRates(defaultRates)
+      
+      const newCurrencyAmounts: {[key: string]: number} = {}
+      Object.keys(defaultRates).forEach(currency => {
+        newCurrencyAmounts[currency] = balances.cash * defaultRates[currency] + 
+                                         balances.bank * defaultRates[currency] + 
+                                         balances.savings * defaultRates[currency]
+      })
+      setCurrencyAmounts(newCurrencyAmounts)
+    } finally {
+      setLoadingRates(false)
+    }
+  }
+
+  // İlk yükleme sırasında döviz kurlarını çek
+  useEffect(() => {
+    if (!isFirstTime) {
+      fetchExchangeRates()
+    }
+  }, [isFirstTime])
+
   // Notlar state
   const [notes, setNotes] = useState<Note[]>([])
   const [noteContent, setNoteContent] = useState('')
@@ -589,13 +654,67 @@ export default function CepFinansApp() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">Döviz</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Dolar, Euro, Sterlin</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Güncel kur takibi</p>
                   </div>
                 </div>
-                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                  • Güncel kur takibi
-                  • Otomatik alarmlar
-                  • Kar/zar analizi
+                
+                {/* Döviz Seçimi */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Para Birimi:</label>
+                    <button 
+                      onClick={() => fetchExchangeRates()}
+                      disabled={loadingRates}
+                      className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingRates ? 'Yükleniyor...' : 'Kurları Güncelle'}
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.keys(exchangeRates).length > 0 ? (
+                      Object.entries(exchangeRates).slice(0, 6).map(([currency, rate]) => (
+                        <button
+                          key={currency}
+                          onClick={() => setSelectedCurrency(currency)}
+                          className={`p-2 rounded border text-left transition-all ${
+                            selectedCurrency === currency 
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' 
+                              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          <div className="font-medium">{currency}</div>
+                          <div className="text-xs text-gray-500">{rate.toFixed(4)}</div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="col-span-2 text-center text-gray-500 py-4">
+                        {loadingRates ? 'Kurlar yükleniyor...' : 'Kurları güncellemek için tıklayın'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bakiye Gösterimi */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mevcut Bakiyeleriniz:</div>
+                  
+                  {Object.keys(currencyAmounts).length > 0 && (
+                    <div className="space-y-2">
+                      {Object.entries(currencyAmounts).slice(0, 6).map(([currency, amount]) => (
+                        <div key={currency} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                          <span className="font-medium">{currency}</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">
+                            {amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    * Gösterilen değerler mevcut bakiyelerinizin güncel kurlarla çevrilmiş halidir
+                  </div>
                 </div>
               </div>
               
