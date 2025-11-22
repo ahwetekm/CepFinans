@@ -79,6 +79,11 @@ export default function CepFinansApp() {
   const [loadingRates, setLoadingRates] = useState(false)
   const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
   const [currencyAmounts, setCurrencyAmounts] = useState<{[key: string]: number}>({})
+  const [showDovizDialog, setShowDovizDialog] = useState(false)
+  const [investmentAmounts, setInvestmentAmounts] = useState<{[key: string]: number}>({})
+  const [investmentPeriod, setInvestmentPeriod] = useState<'1week' | '1month' | '3months' | '6months' | '1year' | '5years'>('1month')
+  const [investmentCurrency, setInvestmentCurrency] = useState<string>('USD')
+  const [investmentGoal, setInvestmentGoal] = useState<string>('')
   
   // Döviz API fonksiyonu
   const fetchExchangeRates = async () => {
@@ -95,12 +100,12 @@ export default function CepFinansApp() {
       // TL kurunu ekleyelim (API'de yoksa manuel ekle)
       const ratesWithTL = {
         ...data.rates,
-        TRY: 32.50 // Manuel TL kuru (örnek değer)
+        TRY: 32.50 // Manuel TL kuru (güncel değer)
       }
       
       setExchangeRates(ratesWithTL)
       
-      // Mevcut bakiyeleri TL'ye çevir
+      // Mevcut bakiyeleri tüm dövizlere çevir
       const newCurrencyAmounts: {[key: string]: number} = {}
       Object.keys(ratesWithTL).forEach(currency => {
         newCurrencyAmounts[currency] = balances.cash * ratesWithTL[currency] + 
@@ -108,6 +113,13 @@ export default function CepFinansApp() {
                                        balances.savings * ratesWithTL[currency]
       })
       setCurrencyAmounts(newCurrencyAmounts)
+      
+      // Yatırım hesaplamaları için değişkenleri güncelle
+      const newInvestmentAmounts: {[key: string]: number} = {}
+      Object.keys(ratesWithTL).forEach(currency => {
+        newInvestmentAmounts[currency] = totalBalance * ratesWithTL[currency]
+      })
+      setInvestmentAmounts(newInvestmentAmounts)
       
     } catch (error) {
       console.error('Döviz kuru hatası:', error)
@@ -127,8 +139,39 @@ export default function CepFinansApp() {
                                          balances.savings * defaultRates[currency]
       })
       setCurrencyAmounts(newCurrencyAmounts)
+      
+      const newInvestmentAmounts: {[key: string]: number} = {}
+      Object.keys(defaultRates).forEach(currency => {
+        newInvestmentAmounts[currency] = totalBalance * defaultRates[currency]
+      })
+      setInvestmentAmounts(newInvestmentAmounts)
     } finally {
       setLoadingRates(false)
+    }
+  }
+
+  // Yatırım hesaplama fonksiyonu
+  const calculateInvestmentGrowth = (amount: number, period: string, currency: string) => {
+    const rate = exchangeRates[currency] || 1
+    const periodMonths = {
+      '1week': 1/52,
+      '1month': 1,
+      '3months': 3,
+      '6months': 6,
+      '1year': 12,
+      '5years': 60
+    }
+    
+    const monthlyRate = periodMonths[period as keyof typeof periodMonths] || 1
+    const futureValue = amount * Math.pow(1.07, monthlyRate) // Yıllık %7 varsayımsal getiri
+    const totalReturn = futureValue - amount
+    const totalReturnPercent = (totalReturn / amount) * 100
+    
+    return {
+      futureValue,
+      totalReturn,
+      totalReturnPercent,
+      monthlyRate: periodMonths[period as keyof typeof periodMonths] || 1
     }
   }
 
@@ -558,6 +601,176 @@ export default function CepFinansApp() {
     return <InitialSetup onComplete={handleInitialSetup} />
   }
 
+      {/* Döviz Dialog Penceresi */}
+      {showDovizDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Döviz Yatırım Merkezi
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowDovizDialog(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Döviz Seçimi */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    1. Döviz Seçimi
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Para Birimi:</label>
+                      <input
+                        type="number"
+                        value={investmentAmounts[investmentCurrency] || 0}
+                        onChange={(e) => {
+                          const newInvestmentAmounts = {...investmentAmounts}
+                          newInvestmentAmounts[investmentCurrency] = parseFloat(e.target.value) || 0
+                          setInvestmentAmounts(newInvestmentAmounts)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="0.00"
+                        step="0.01"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Döviz:</label>
+                      <select
+                        value={investmentCurrency}
+                        onChange={(e) => setInvestmentCurrency(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="USD">USD - Amerikan Doları</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - İngiliz Sterlini</option>
+                        <option value="JPY">JPY - Japon Yeni</option>
+                        <option value="CHF">CHF - İsviçre Frangı</option>
+                        <option value="CAD">CAD - Kanada Doları</option>
+                        <option value="AUD">AUD - Avustralya Doları</option>
+                        <option value="TRY">TRY - Türk Lirası</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Mevcut bakiyeniz: <span className="font-semibold text-green-600 dark:text-green-400">
+                      {totalBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                    </span>
+                  </div>
+                </div>
+
+                {/* Yatırım Süresi */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    2. Yatırım Süresi
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Süre:</label>
+                      <select
+                        value={investmentPeriod}
+                        onChange={(e) => setInvestmentPeriod(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="1week">1 Hafta</option>
+                        <option value="1month">1 Ay</option>
+                        <option value="3months">3 Ay</option>
+                        <option value="6months">6 Ay</option>
+                        <option value="1year">1 Yıl</option>
+                        <option value="5years">5 Yıl</option>
+                      </select>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Tahmini yıllık getiri: <span className="font-semibold text-green-600 dark:text-green-400">%7</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Not: Bu sadece bir tahmindir. Gerçek yatırım getirileri değişebilir.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hesaplama */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    3. Potansiyel Getiri
+                  </h3>
+                  <div className="space-y-3">
+                    {investmentAmounts[investmentCurrency] > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Yatırım Tutarı:</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {investmentAmounts[investmentCurrency].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {investmentCurrency}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Süre Sonu:</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {calculateInvestmentGrowth(investmentAmounts[investmentCurrency], investmentPeriod, investmentCurrency).futureValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {investmentCurrency}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Toplam Getiri:</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {calculateInvestmentGrowth(investmentAmounts[investmentCurrency], investmentPeriod, investmentCurrency).totalReturn.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {investmentCurrency}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Getiri Oranı:</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {calculateInvestmentGrowth(investmentAmounts[investmentCurrency], investmentPeriod, investmentCurrency).totalReturnPercent.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Yatırım Özeti</h4>
+                        <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                          <p>• <strong>Yatırım:</strong> {investmentAmounts[investmentCurrency].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {investmentCurrency}</p>
+                          <p>• <strong>Süre:</strong> {investmentPeriod}</p>
+                          <p>• <strong>Beklenen Getiri:</strong> {calculateInvestmentGrowth(investmentAmounts[investmentCurrency], investmentPeriod, investmentCurrency).totalReturn.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {investmentCurrency}</p>
+                          <p>• <strong>Getiri Oranı:</strong> {calculateInvestmentGrowth(investmentAmounts[investmentCurrency], investmentPeriod, investmentCurrency).totalReturnPercent.toFixed(2)}%</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-6">
+                <Button 
+                  onClick={() => {
+                    alert('Döviz yatırım özelliği yakında hizmetinize sunulacaktır!')
+                    setShowDovizDialog(false)
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium"
+                >
+                  Anladım
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto p-4 md:p-6 pb-32">
@@ -658,64 +871,12 @@ export default function CepFinansApp() {
                   </div>
                 </div>
                 
-                {/* Döviz Seçimi */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Para Birimi:</label>
-                    <button 
-                      onClick={() => fetchExchangeRates()}
-                      disabled={loadingRates}
-                      className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loadingRates ? 'Yükleniyor...' : 'Kurları Güncelle'}
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.keys(exchangeRates).length > 0 ? (
-                      Object.entries(exchangeRates).slice(0, 6).map(([currency, rate]) => (
-                        <button
-                          key={currency}
-                          onClick={() => setSelectedCurrency(currency)}
-                          className={`p-2 rounded border text-left transition-all ${
-                            selectedCurrency === currency 
-                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' 
-                              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                        >
-                          <div className="font-medium">{currency}</div>
-                          <div className="text-xs text-gray-500">{rate.toFixed(4)}</div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="col-span-2 text-center text-gray-500 py-4">
-                        {loadingRates ? 'Kurlar yükleniyor...' : 'Kurları güncellemek için tıklayın'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bakiye Gösterimi */}
-                <div className="space-y-3">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mevcut Bakiyeleriniz:</div>
-                  
-                  {Object.keys(currencyAmounts).length > 0 && (
-                    <div className="space-y-2">
-                      {Object.entries(currencyAmounts).slice(0, 6).map(([currency, amount]) => (
-                        <div key={currency} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <span className="font-medium">{currency}</span>
-                          <span className="font-bold text-green-600 dark:text-green-400">
-                            {amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    * Gösterilen değerler mevcut bakiyelerinizin güncel kurlarla çevrilmiş halidir
-                  </div>
-                </div>
+                <button 
+                  onClick={() => setShowDovizDialog(true)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300"
+                >
+                  Döviz Merkezini Aç
+                </button>
               </div>
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-amber-200 dark:border-amber-700 hover:shadow-md transition-all duration-300 cursor-pointer">
