@@ -113,7 +113,7 @@ npm start
 
 ### Mobil Görünüm
 <div align="center">
-  <img src="public/mobile-preview.png" alt="Mobile App" width="300">
+  <img src="public/mobile.png" alt="Mobile App" width="300">
 </div>
 
 ### Grafik ve İstatistikler
