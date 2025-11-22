@@ -108,7 +108,7 @@ npm start
 
 ### Desktop Görünüm
 <div align="center">
-  <img src="public/dashboard-preview.png" alt="Desktop Dashboard" width="800">
+  <img src="https://z-cdn-media.chatglm.cn/files/7ce364c3-b08b-48f9-90e9-8cc1d4bef350_pasted_image_1763804496039.png?auth_key=1863802164-4269f12fae7a44308174c579b534c590-0-1ec034552e09a8de9dbe7d97428da9ba" alt="Desktop Dashboard" width="800">
 </div>
 
 ### Mobil Görünüm
