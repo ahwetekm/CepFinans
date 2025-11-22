@@ -116,11 +116,6 @@ npm start
   <img src="public/mobile.png" alt="Mobile App" width="300">
 </div>
 
-### Grafik ve İstatistikler
-<div align="center">
-  <img src="public/charts-preview.png" alt="Charts and Statistics" width="800">
-</div>
-
 ## 📊 Grafik ve İstatistik Özellikleri
 
 CepFinans, finansal verilerinizi görselleştirmek için zengin grafik seçenekleri sunar:
