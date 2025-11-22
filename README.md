@@ -1,5 +1,5 @@
 # <div align="center">
-  <img src="public/logo.png" alt="CepFinans Logo" width="120" height="120">
+  <img src="public/favicon.png" alt="CepFinans Logo" width="120" height="120">
 </div>
 
 <h1 align="center">CepFinans</h1>
