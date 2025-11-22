@@ -108,7 +108,7 @@ npm start
 
 ### Desktop Görünüm
 <div align="center">
-  <img src="public/dashboard.png" alt="Desktop Dashboard" width="800">
+  <img src="public/desktop.png" alt="Desktop Dashboard" width="800">
 </div>
 
 ### Mobil Görünüm
