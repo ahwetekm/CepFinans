@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowRight, TrendingUp, PiggyBank, Users, CheckCircle, BarChart3, Lock, Zap, Github, HelpCircle, X, Mail, Send, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, TrendingUp, PiggyBank, Users, CheckCircle, BarChart3, Lock, Zap, Github, HelpCircle, X, Mail, Send, AlertCircle, CheckCircle2, TrendingDown, DollarSign, Target } from 'lucide-react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 
@@ -11,6 +11,8 @@ export default function HomePage() {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null)
   const [showGuide, setShowGuide] = useState(false)
   const [showContactDialog, setShowContactDialog] = useState(false)
+  const [showInvestmentDialog, setShowInvestmentDialog] = useState(false)
+  const [selectedInvestmentCategory, setSelectedInvestmentCategory] = useState<string | null>(null)
   
   // İletişim form state
   const [formData, setFormData] = useState({
@@ -113,6 +115,33 @@ export default function HomePage() {
     { value: 'Güvenli', icon: Lock },
     { value: 'Hızlı', icon: Zap },
     { value: 'Basit', icon: Users }
+  ]
+
+  const investmentCategories = [
+    {
+      id: 'doviz',
+      name: 'Döviz',
+      icon: DollarSign,
+      description: 'Dolar, Euro, Sterlin gibi döviz yatırımları',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50 dark:bg-green-900/20'
+    },
+    {
+      id: 'maden',
+      name: 'Maden',
+      icon: Target,
+      description: 'Altın, gümüş, platin gibi değerli madenler',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50 dark:bg-amber-900/20'
+    },
+    {
+      id: 'kripto',
+      name: 'Kripto',
+      icon: TrendingUp,
+      description: 'Bitcoin, Ethereum gibi kripto paralar',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
+    }
   ]
 
   return (
@@ -369,6 +398,109 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Yatırım Merkezi */}
+      <section className="py-20 px-6 bg-white dark:bg-gray-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Yatırım Merkezi
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Finansal geleceğinizi çeşitli yatırım araçlarıyla şekillendirin
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {investmentCategories.map((category) => (
+              <Card
+                key={category.id}
+                className={`border-0 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer bg-white dark:bg-gray-800 ${
+                  selectedInvestmentCategory === category.id ? 'ring-2 ring-green-500/20' : ''
+                }`}
+                onClick={() => setSelectedInvestmentCategory(category.id)}
+              >
+                <CardContent className="p-8 text-center">
+                  <div className={`w-16 h-16 mx-auto mb-6 ${category.bgColor} rounded-2xl flex items-center justify-center`}>
+                    <category.icon className={`w-8 h-8 ${category.color}`} />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                    {category.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {category.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              onClick={() => setShowInvestmentDialog(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 text-xl font-medium shadow-lg"
+            >
+              Yatırım Yapmaya Başla
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Yatırım Dialog */}
+      {showInvestmentDialog && selectedInvestmentCategory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {investmentCategories.find(c => c.id === selectedInvestmentCategory)?.name} Yatırımı
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowInvestmentDialog(false)
+                  setSelectedInvestmentCategory(null)
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="text-center">
+                <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                  <strong>{investmentCategories.find(c => c.id === selectedInvestmentCategory)?.name}</strong> yatırım aracı yakında hizmetinize sunulacaktır.
+                </p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">
+                    🚀 Çok Yakında!
+                  </h3>
+                  <p className="text-blue-700 dark:text-blue-400 leading-relaxed">
+                    Bu yatırım özelliği şu anda geliştirme aşamasındadır. En kısa sürede CepFinans'a entegre edilecektir.
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Gerçek zamanlı veri takibi</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Otomatik alarmlar</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Güvenli yatırım platformu</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Güven İndikatörleri */}
       <section className="py-20 px-6">
