@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,7 +31,7 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { UserAuthButton } from '@/components/auth/UserAuthButton'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { t } = useLanguage()
   const { user, updateUser } = useAuth()
   const router = useRouter()
@@ -818,5 +818,13 @@ export default function SettingsPage() {
         </Tabs>
       </main>
     </div>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Yükleniyor...</div>}>
+      <SettingsContent />
+    </Suspense>
   )
 }
