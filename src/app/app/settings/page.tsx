@@ -21,8 +21,12 @@ import {
   Shield,
   Trash2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Wallet,
+  TrendingUp,
+  Settings
 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -382,22 +386,57 @@ function SettingsContent() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => router.back()}
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => router.back()}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-semibold">Ayarlar</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <LanguageToggle />
+              <UserAuthButton />
+            </div>
+          </div>
+          
+          {/* Navigasyon Menüsü */}
+          <nav className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <Link 
+              href="/app" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-xl font-semibold">Ayarlar</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <LanguageToggle />
-            <UserAuthButton />
-          </div>
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Finans
+              </div>
+            </Link>
+            <Link 
+              href="/app/investments" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Yatırımlar
+              </div>
+            </Link>
+            <Link 
+              href="/app/settings" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Ayarlar
+              </div>
+            </Link>
+          </nav>
         </div>
       </header>
 

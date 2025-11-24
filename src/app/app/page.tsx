@@ -670,29 +670,62 @@ export default function CepFinansApp() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto p-4 md:p-6 pb-32">
         {/* Header */}
-        <header className="mb-8 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="hover:opacity-80 transition-opacity duration-200">
-              <img 
-                src="/favicon.png" 
-                alt={t('app.title')} 
-                className="w-12 h-12 rounded-xl shadow-sm"
-              />
-            </Link>
-            <div>
+        <header className="mb-8">
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center gap-4">
               <Link href="/" className="hover:opacity-80 transition-opacity duration-200">
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-                  {t('app.title')}
-                </h1>
+                <img 
+                  src="/favicon.png" 
+                  alt={t('app.title')} 
+                  className="w-12 h-12 rounded-xl shadow-sm"
+                />
               </Link>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">{t('app.modernPersonalFinance')}</p>
+              <div>
+                <Link href="/" className="hover:opacity-80 transition-opacity duration-200">
+                  <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+                    {t('app.title')}
+                  </h1>
+                </Link>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">{t('app.modernPersonalFinance')}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <UserAuthButton />
+              <LanguageToggle />
+              <ThemeToggle />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <UserAuthButton />
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
+          
+          {/* Navigasyon Menüsü */}
+          <nav className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <Link 
+              href="/app" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Finans
+              </div>
+            </Link>
+            <Link 
+              href="/app/investments" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Yatırımlar
+              </div>
+            </Link>
+            <Link 
+              href="/app/settings" 
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Ayarlar
+              </div>
+            </Link>
+          </nav>
         </header>
 
         {/* İstatistik Kartları */}
