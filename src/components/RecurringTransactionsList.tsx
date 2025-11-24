@@ -24,8 +24,9 @@ interface RecurringTransaction {
   category: string
   description: string
   account: 'cash' | 'bank' | 'savings'
-  frequency: 'daily' | 'monthly' | 'yearly' | 'custom'
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
   customFrequency?: string
+  dayOfWeek?: number  // Haftalık için (1-7, 1=Pazartesi)
   startDate: string
   endDate?: string
   isActive: boolean
@@ -52,12 +53,14 @@ export default function RecurringTransactionsList({
     account: 'cash',
     frequency: 'monthly',
     customFrequency: '',
+    dayOfWeek: 1, // Haftalık için (1-7, 1=Pazartesi)
     startDate: new Date().toISOString().split('T')[0],
     isActive: true
   })
 
   const frequencyOptions = [
     { value: 'daily', label: 'Günlük', icon: Calendar },
+    { value: 'weekly', label: 'Haftalık', icon: Calendar },
     { value: 'monthly', label: 'Aylık', icon: Calendar },
     { value: 'yearly', label: 'Yıllık', icon: Calendar },
     { value: 'custom', label: 'Diğer', icon: Calendar }
@@ -75,12 +78,22 @@ export default function RecurringTransactionsList({
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth()
     const currentDay = today.getDate()
+    const currentWeekDay = today.getDay() // 0 = Pazar, 1 = Pazartesi
 
     let nextDate = new Date()
 
     switch (recurring.frequency) {
       case 'daily':
         nextDate = new Date(currentYear, currentMonth, currentDay + 1)
+        break
+      case 'weekly':
+        if (recurring.dayOfWeek) {
+          // JavaScript'te: 0=Pazar, 1=Pazartesi
+          // Bizim sistemimizde: 1=Pazartesi, 7=Pazar
+          const jsDayOfWeek = recurring.dayOfWeek === 7 ? 0 : recurring.dayOfWeek
+          const daysUntilNext = (jsDayOfWeek - currentWeekDay + 7) % 7
+          nextDate = new Date(currentYear, currentMonth, currentDay + daysUntilNext)
+        }
         break
       case 'monthly':
         nextDate = new Date(currentYear, currentMonth + 1, currentDay)
@@ -124,6 +137,7 @@ export default function RecurringTransactionsList({
       account: 'cash',
       frequency: 'monthly',
       customFrequency: '',
+      dayOfWeek: 1,
       startDate: new Date().toISOString().split('T')[0],
       isActive: true
     })
@@ -286,6 +300,27 @@ export default function RecurringTransactionsList({
                   />
                 </div>
               </div>
+
+              {newTransaction.frequency === 'weekly' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Haftanın Günü
+                  </label>
+                  <select
+                    value={newTransaction.dayOfWeek?.toString()}
+                    onChange={(e) => setNewTransaction(prev => ({ ...prev, dayOfWeek: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="1">Pazartesi</option>
+                    <option value="2">Salı</option>
+                    <option value="3">Çarşamba</option>
+                    <option value="4">Perşembe</option>
+                    <option value="5">Cuma</option>
+                    <option value="6">Cumartesi</option>
+                    <option value="7">Pazar</option>
+                  </select>
+                </div>
+              )}
 
               {newTransaction.frequency === 'custom' && (
                 <div>

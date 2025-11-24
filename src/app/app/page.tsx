@@ -41,8 +41,9 @@ interface RecurringTransaction {
   category: string
   description: string
   account: 'cash' | 'bank' | 'savings'
-  frequency: 'daily' | 'monthly' | 'yearly' | 'custom'
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
   customFrequency?: string
+  dayOfWeek?: number  // Haftalık için (1-7, 1=Pazartesi)
   startDate: string
   endDate?: string
   isActive: boolean
@@ -155,6 +156,7 @@ export default function CepFinansApp() {
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
     const currentDay = today.getDate()
+    const currentWeekDay = today.getDay() // 0 = Pazar, 1 = Pazartesi
     const todayStr = today.toISOString().split('T')[0]
 
     recurringTransactions.forEach(recurring => {
@@ -165,6 +167,15 @@ export default function CepFinansApp() {
       switch (recurring.frequency) {
         case 'daily':
           shouldApply = true // Her gün uygula
+          break
+        case 'weekly':
+          // Haftalık için seçilen gün kontrol et
+          if (recurring.dayOfWeek) {
+            // JavaScript'te: 0=Pazar, 1=Pazartesi
+            // Bizim sistemimizde: 1=Pazartesi, 7=Pazar
+            const jsDayOfWeek = recurring.dayOfWeek === 7 ? 0 : recurring.dayOfWeek
+            shouldApply = currentWeekDay === jsDayOfWeek
+          }
           break
         case 'monthly':
           // Aylık için her ayın aynı günü
@@ -323,6 +334,7 @@ export default function CepFinansApp() {
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
     const currentDay = today.getDate()
+    const currentWeekDay = today.getDay() // 0 = Pazar, 1 = Pazartesi
 
     return recurringTransactions
       .filter(r => r.isActive)
@@ -332,6 +344,15 @@ export default function CepFinansApp() {
         switch (r.frequency) {
           case 'daily':
             nextDate = new Date(currentYear, currentMonth, currentDay + 1)
+            break
+          case 'weekly':
+            if (r.dayOfWeek) {
+              // JavaScript'te: 0=Pazar, 1=Pazartesi
+              // Bizim sistemimizde: 1=Pazartesi, 7=Pazar
+              const jsDayOfWeek = r.dayOfWeek === 7 ? 0 : r.dayOfWeek
+              const daysUntilNext = (jsDayOfWeek - currentWeekDay + 7) % 7
+              nextDate = new Date(currentYear, currentMonth, currentDay + daysUntilNext)
+            }
             break
           case 'monthly':
             nextDate = new Date(currentYear, currentMonth + 1, currentDay)
@@ -1873,8 +1894,9 @@ function RecurringTransactionForm({
     category: '',
     description: '',
     account: 'cash' as 'cash' | 'bank' | 'savings',
-    frequency: 'monthly' as 'daily' | 'monthly' | 'yearly' | 'custom',
+    frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
     customFrequency: '',
+    dayOfWeek: 1, // Haftalık için (1-7, 1=Pazartesi)
     startDate: new Date().toISOString().split('T')[0]
   })
 
@@ -1902,6 +1924,7 @@ function RecurringTransactionForm({
       account: formData.account,
       frequency: formData.frequency,
       customFrequency: formData.frequency === 'custom' ? formData.customFrequency : undefined,
+      dayOfWeek: formData.frequency === 'weekly' ? formData.dayOfWeek : undefined,
       startDate: formData.startDate,
       isActive: true
     })
@@ -1914,6 +1937,7 @@ function RecurringTransactionForm({
       account: 'cash',
       frequency: 'monthly',
       customFrequency: '',
+      dayOfWeek: 1,
       startDate: new Date().toISOString().split('T')[0]
     })
     onClose()
@@ -1939,7 +1963,7 @@ function RecurringTransactionForm({
 
         <div>
           <Label>{t('app.recurringFrequency')}</Label>
-          <Select value={formData.frequency} onValueChange={(value: 'daily' | 'monthly' | 'yearly' | 'custom') => 
+          <Select value={formData.frequency} onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom') => 
             setFormData(prev => ({ ...prev, frequency: value }))
           }>
             <SelectTrigger>
@@ -1947,6 +1971,7 @@ function RecurringTransactionForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="daily">Günlük</SelectItem>
+              <SelectItem value="weekly">Haftalık</SelectItem>
               <SelectItem value="monthly">{t('app.monthly')}</SelectItem>
               <SelectItem value="yearly">{t('app.yearly')}</SelectItem>
               <SelectItem value="custom">Diğer</SelectItem>
@@ -1984,6 +2009,28 @@ function RecurringTransactionForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
+        {formData.frequency === 'weekly' && (
+          <div>
+            <Label>Haftanın Günü</Label>
+            <Select value={formData.dayOfWeek.toString()} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, dayOfWeek: parseInt(value) || 1 }))
+            }>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Pazartesi</SelectItem>
+                <SelectItem value="2">Salı</SelectItem>
+                <SelectItem value="3">Çarşamba</SelectItem>
+                <SelectItem value="4">Perşembe</SelectItem>
+                <SelectItem value="5">Cuma</SelectItem>
+                <SelectItem value="6">Cumartesi</SelectItem>
+                <SelectItem value="7">Pazar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {formData.frequency === 'custom' && (
           <div className="col-span-2">
             <Label>Özel Periyot</Label>
