@@ -70,12 +70,28 @@ function SettingsContent() {
   const [resetLoading, setResetLoading] = useState(false)
 
   useEffect(() => {
+    console.log('🔄 Settings useEffect tetiklendi', {
+      user: user?.id,
+      tab,
+      action,
+      showResetDialog,
+      showDeleteDialog
+    })
+    
     if (user) {
       setName(user.user_metadata?.full_name || '')
       setEmail(user.email || '')
       setAvatarUrl(user.user_metadata?.avatar_url || '')
+      
+      // URL parametrelerine göre dialog'ları ayarla
+      if (action === 'delete' && !showDeleteDialog) {
+        setShowDeleteDialog(true)
+      }
+      if (action === 'reset' && !showResetDialog) {
+        setShowResetDialog(true)
+      }
     }
-  }, [user])
+  }, [user, tab, action])
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })
@@ -337,16 +353,22 @@ function SettingsContent() {
         .getPublicUrl(filePath)
 
       // Update user metadata
+      console.log('👤 User metadata güncelleniyor:', { avatarUrl: publicUrl })
       const { error: updateError } = await supabase.auth.updateUser({
         data: { avatar_url: publicUrl }
       })
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('❌ User metadata güncelleme hatası:', updateError)
+        throw updateError
+      }
 
+      console.log('✅ User metadata başarıyla güncellendi')
       setAvatarUrl(publicUrl)
       await updateUser()
       showMessage('success', 'Profil resmi başarı güncellendi')
     } catch (error: any) {
+      console.error('❌ Avatar upload genel hata:', error)
       showMessage('error', error.message || 'Profil resmi yüklenirken hata oluştu')
     } finally {
       setUploadingAvatar(false)
