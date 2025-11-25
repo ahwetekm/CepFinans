@@ -1,0 +1,8 @@
+{
+  "contexts/AuthContext.tsx -> @/lib/email-template": {
+    "id": "contexts/AuthContext.tsx -> @/lib/email-template",
+    "files": [
+      "static/chunks/_app-pages-browser_src_lib_email-template_ts.js"
+    ]
+  }
+}
